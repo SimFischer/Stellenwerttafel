@@ -440,6 +440,9 @@
     }
   }
 
+  // langes Drücken auf der Tafel soll kein Kontextmenü öffnen
+  board.addEventListener("contextmenu", (e) => e.preventDefault());
+
   window.addEventListener("pointerup", (e) => endDrag(e, false));
   window.addEventListener("pointercancel", (e) => endDrag(e, true));
 
