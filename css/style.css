@@ -1,0 +1,362 @@
+/* ============================================================
+   Stellenwerttafel – Gestaltung
+   ============================================================ */
+
+@font-face {
+  font-family: "Nunito";
+  src: url("../fonts/Nunito.ttf") format("truetype");
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #fdf8ef;            /* warmes Cremeweiß */
+  --bg-deep: #f6eddc;
+  --ink: #3a3346;           /* weiches Dunkel-Violett statt Schwarz */
+  --ink-soft: #7a7088;
+  --surface: #fffdf8;
+  --shadow: 0 10px 30px rgba(92, 70, 40, 0.10), 0 2px 6px rgba(92, 70, 40, 0.08);
+  --radius-card: 24px;
+  --touch: 64px;            /* Mindestgröße für Bedienelemente */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --dot: 44px;              /* wird per JS an die Spaltenbreite angepasst */
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  height: 100dvh;
+  font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #fff3dc 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, #fbe9e3 0%, transparent 60%),
+    var(--bg);
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font: inherit; color: inherit; }
+
+/* ---------- Kopfzeile ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 32px 6px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px;
+  background: var(--surface);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.stepper-label {
+  min-width: 7.5em;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.stepper-label strong { color: var(--ink); font-weight: 900; }
+
+/* ---------- Buttons ---------- */
+
+.round-btn,
+.pill-btn {
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.25s var(--spring), box-shadow 0.25s var(--soft), opacity 0.2s;
+}
+.round-btn:active,
+.pill-btn:active { transform: scale(0.92); }
+.round-btn:disabled,
+.pill-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+.round-btn:focus-visible,
+.pill-btn:focus-visible { outline: 4px solid #7cb7ff; outline-offset: 3px; }
+
+.round-btn {
+  width: var(--touch);
+  height: var(--touch);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0 0 4px;
+  background: var(--btn, #efe6f7);
+  color: var(--btn-ink, var(--ink));
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.10), 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+.round-btn.small { background: var(--bg-deep); }
+
+.pill-btn {
+  min-height: var(--touch);
+  padding: 0 32px;
+  border-radius: 999px;
+  font-size: 24px;
+  font-weight: 800;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.pill-btn.danger { color: #c4473d; }
+
+/* ---------- Tafel ---------- */
+
+.board {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  column-gap: 14px;
+  row-gap: 8px;
+  padding: 10px 32px 14px;
+  min-height: 0;
+}
+
+.class-label {
+  grid-row: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 4px 0 6px;
+  border-bottom: 3px solid var(--bg-deep);
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.class-label:empty { border-color: transparent; }
+
+.column {
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow), inset 0 0 0 3px rgba(255, 255, 255, 0.6);
+  transition: transform 0.35s var(--spring), box-shadow 0.3s var(--soft);
+}
+
+.column.drop-ok {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 34px rgba(92, 70, 40, 0.16), inset 0 0 0 4px var(--dot-color);
+}
+
+.column-head {
+  padding: 14px 8px 6px;
+  text-align: center;
+  color: var(--head);
+}
+.column-head .abbr {
+  display: block;
+  font-size: clamp(36px, 4vw, 64px);
+  font-weight: 900;
+  line-height: 1;
+}
+.column-head .name {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(13px, 1.25vw, 20px);
+  font-weight: 700;
+  opacity: 0.85;
+  hyphens: manual;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
+.dots {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--dot) * 0.3);
+  padding: 10px 8px;
+}
+
+.frame {
+  display: grid;
+  grid-template-columns: repeat(5, var(--dot));
+  grid-auto-rows: var(--dot);
+  gap: calc(var(--dot) * 0.16);
+  padding: calc(var(--dot) * 0.16);
+  border-radius: calc(var(--dot) * 0.5 + 6px);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.slot {
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.045);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dot {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0 9%, transparent 30%),
+    radial-gradient(circle at 40% 35%, var(--dot-light) 0%, var(--dot-color) 55%, var(--dot-dark) 100%);
+  box-shadow:
+    0 calc(var(--dot) * 0.08) calc(var(--dot) * 0.18) var(--dot-shadow),
+    inset 0 calc(var(--dot) * -0.06) 0 rgba(0, 0, 0, 0.10);
+  cursor: grab;
+  touch-action: none;
+}
+.dot.is-hidden { visibility: hidden; }
+
+.column-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 8px 16px;
+}
+.column-controls .round-btn {
+  --btn: var(--dot-color);
+  --btn-ink: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+}
+.column-controls .round-btn.minus {
+  --btn: #fff;
+  --btn-ink: var(--head);
+  text-shadow: none;
+}
+
+/* ---------- Fußzeile mit Zahl ---------- */
+
+.bottombar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 6px 32px 22px;
+}
+.bottombar #toggle-number { justify-self: start; }
+.bottombar #clear { justify-self: end; }
+
+.number {
+  min-width: 6ch;
+  padding: 2px 40px 6px;
+  text-align: center;
+  font-size: clamp(56px, 7vw, 110px);
+  font-weight: 900;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  background: var(--surface);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  transition: color 0.3s, filter 0.3s;
+}
+.number.is-hidden { color: #d9cfbf; }
+
+/* ---------- Sprechblase ---------- */
+
+.bubble {
+  position: fixed;
+  z-index: 50;
+  max-width: 340px;
+  padding: 18px 24px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 14px 36px rgba(92, 70, 40, 0.22);
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 28px;
+  height: 28px;
+  background: #fff;
+  border-radius: 0 0 8px 0;
+  transform: translateX(-50%) rotate(45deg);
+}
+.bubble.show { animation: bubble-in 0.45s var(--spring) both; }
+.bubble.hide { animation: bubble-out 0.3s var(--soft) both; }
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translate(-50%, -80%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
+@keyframes bubble-out {
+  to { opacity: 0; transform: translate(-50%, -90%) scale(0.85); }
+}
+
+/* ---------- Animationen ---------- */
+
+.dot.pop { animation: pop 0.5s var(--spring) both; }
+.dot.vanish { animation: vanish 0.3s var(--soft) both; }
+
+@keyframes pop {
+  0%   { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+@keyframes vanish {
+  to { transform: scale(0); opacity: 0; }
+}
+
+/* Fliegende Punkte (Ziehen, Bündeln, Entbündeln) */
+.flyer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  pointer-events: none;
+  will-change: transform;
+}
+.flyer.dragging {
+  cursor: grabbing;
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.18));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---------- Kleine Bildschirme ---------- */
+
+@media (max-width: 900px) {
+  .topbar, .bottombar, .board { padding-left: 16px; padding-right: 16px; }
+  .board { column-gap: 8px; }
+  .bottombar { grid-template-columns: 1fr 1fr; }
+  .number { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+  .pill-btn { padding: 0 20px; font-size: 20px; }
+}
