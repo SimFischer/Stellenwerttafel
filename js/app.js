@@ -34,6 +34,7 @@
     visible: DEFAULT_PLACES,
     counts: new Array(MAX_PLACES).fill(0)
   };
+  let busy = false;   // true, während eine Bündel-/Entbündel-Animation läuft
 
   /* ---------- DOM ---------- */
   const $ = (sel) => document.querySelector(sel);
@@ -188,10 +189,125 @@
     document.documentElement.style.setProperty("--dot", d.toFixed(1) + "px");
   }
 
+  /* ---------- Zahl unter der Tafel ---------- */
+  const numberEl = $("#number");
+  const toggleBtn = $("#toggle-number");
+  let numberShown = true;
+
+  function currentValue() {
+    // BigInt, damit auch viele Punkte in hohen Stellen exakt bleiben
+    let value = 0n;
+    for (let place = MAX_PLACES - 1; place >= 0; place--) {
+      value = value * 10n + BigInt(state.counts[place]);
+    }
+    return value;
+  }
+
+  function formatNumber(value) {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  function updateNumber() {
+    if (numberShown) {
+      numberEl.textContent = formatNumber(currentValue());
+      numberEl.classList.remove("is-hidden");
+    } else {
+      numberEl.textContent = "?";
+      numberEl.classList.add("is-hidden");
+    }
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    numberShown = !numberShown;
+    toggleBtn.textContent = numberShown ? "Zahl verbergen" : "Zahl zeigen";
+    toggleBtn.setAttribute("aria-pressed", String(numberShown));
+    updateNumber();
+  });
+
+  /* ---------- Sprechblase ---------- */
+  const bubble = $("#bubble");
+  let bubbleTimer = 0;
+
+  function say(text, x, y) {
+    clearTimeout(bubbleTimer);
+    bubble.textContent = text;
+    bubble.hidden = false;
+    // innerhalb des Bildschirms halten
+    const half = Math.min(170, window.innerWidth / 2 - 12);
+    bubble.style.left = Math.max(half + 12, Math.min(window.innerWidth - half - 12, x)) + "px";
+    bubble.style.top = Math.max(140, y - 24) + "px";
+    bubble.classList.remove("hide", "show");
+    void bubble.offsetWidth;            // Animation neu starten
+    bubble.classList.add("show");
+    bubbleTimer = setTimeout(() => {
+      bubble.classList.replace("show", "hide");
+      bubbleTimer = setTimeout(() => { bubble.hidden = true; }, 300);
+    }, 2600);
+  }
+
+  function sayAbove(el, text) {
+    const r = el.getBoundingClientRect();
+    say(text, r.left + r.width / 2, r.top);
+  }
+
+  /* ---------- Punkte hinzufügen / entfernen ---------- */
+  function addDot(place) {
+    const col = columnEls[place];
+    if (state.counts[place] >= MAX_DOTS) {
+      sayAbove(col.querySelector(".dots"), "Hier ist kein Platz mehr. Bündle doch mal!");
+      return;
+    }
+    state.counts[place]++;
+    renderColumn(place, { pop: 1 });
+    fitDots();
+    updateNumber();
+  }
+
+  function removeDot(place) {
+    if (state.counts[place] === 0) return;
+    const dots = columnEls[place].querySelectorAll(".dot:not(.vanish)");
+    const last = dots[dots.length - 1];
+    if (!last) return;
+    state.counts[place]--;              // Zustand sofort, Bild nach der Animation
+    updateNumber();
+    last.classList.remove("pop");
+    last.classList.add("vanish");
+    // Zeitgeber statt animationend: funktioniert auch, wenn der Browser
+    // Animationen auslässt (z. B. „Bewegung reduzieren“)
+    setTimeout(() => {
+      if (!busy) { renderColumn(place); fitDots(); }
+    }, 300);
+  }
+
+  board.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const place = Number(btn.closest(".column").dataset.place);
+    if (btn.dataset.action === "add") addDot(place);
+    else removeDot(place);
+  });
+
+  /* ---------- Alles löschen ---------- */
+  $("#clear").addEventListener("click", () => {
+    state.counts.fill(0);
+    updateNumber();
+    const dots = board.querySelectorAll(".dot");
+    if (!dots.length) return;
+    dots.forEach((d) => { d.classList.remove("pop"); d.classList.add("vanish"); });
+    setTimeout(renderAll, 320);
+  });
+
   /* ---------- Anzahl der Stellen ---------- */
   function setVisible(n) {
     n = Math.max(MIN_PLACES, Math.min(MAX_PLACES, n));
     if (n === state.visible) return;
+    if (n < state.visible) {
+      const top = state.visible - 1;   // die Spalte, die verschwinden würde
+      if (state.counts[top] > 0) {
+        sayAbove(columnEls[top], `Die ${PLACES[top].abbr}-Spalte ist noch nicht leer.`);
+        return;
+      }
+    }
     state.visible = n;
     buildBoard();
   }
@@ -202,4 +318,5 @@
   new ResizeObserver(fitDots).observe(board);
 
   buildBoard();
+  updateNumber();
 })();
